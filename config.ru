@@ -12,12 +12,16 @@ require 'sinatra/base'
 require 'oauth2'
 require 'json'
 
-$access_token = nil
-
 class App < Sinatra::Base
 
+  set :sessions, true
+
   get '/' do
-    "Why not authenticate with <a href=\'/auth/gowalla\'>Gowalla</a>?"
+    if session[:access_token]
+      redirect '/auth/gowalla/test'
+    else
+      "Why not authenticate with <a href=\'/auth/gowalla\'>Gowalla</a>?"
+    end
   end
 
   get '/auth/gowalla' do
@@ -26,15 +30,20 @@ class App < Sinatra::Base
   end
 
   get '/auth/gowalla/callback' do
-    $access_token = client.
+    session[:access_token] = client.
       web_server.
-      get_access_token(params[:code], :redirect_uri => redirect_uri)
+      get_access_token(params[:code], :redirect_uri => redirect_uri).token
 
-    redirect '/auth/gowalla/test'
+    if session[:access_token]
+      redirect '/auth/gowalla/test'
+    else
+      "Error retrieving access token."
+    end
   end
 
   get '/auth/gowalla/test' do
-    $access_token.get('/api/oauth/echo').to_s
+    connection = OAuth2::AccessToken.new(client, session[:access_token])
+    connection.get('/api/oauth/echo').to_s
   end
 
   protected
