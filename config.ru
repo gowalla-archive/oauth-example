@@ -21,15 +21,16 @@ class App < Sinatra::Base
   end
 
   get '/auth/gowalla' do
-    # AKK: add state option
     redirect(client.web_server.
-               authorize_url(:redirect_uri => redirect_uri, :state => 1))
+             authorize_url(:redirect_uri => redirect_uri, :state => 1))
   end
 
   get '/auth/gowalla/callback' do
-    $access_token = client.web_server.get_access_token(params[:code], :redirect_uri => redirect_uri)
+    $access_token = client.
+      web_server.
+      get_access_token(params[:code], :redirect_uri => redirect_uri)
 
-    $access_token.inspect
+    redirect '/auth/gowalla/test'
   end
 
   get '/auth/gowalla/test' do
