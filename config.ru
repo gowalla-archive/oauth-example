@@ -42,8 +42,13 @@ class App < Sinatra::Base
   end
 
   get '/auth/gowalla/test' do
-    connection = OAuth2::AccessToken.new(client, session[:access_token])
-    connection.get('/api/oauth/echo').to_s
+    if session[:access_token]
+      connection = OAuth2::AccessToken.new(client, session[:access_token])
+      headers = {'Accept' => 'application/json'}
+      connection.get('/users/jw', {}, headers).inspect
+    else
+      redirect '/auth/gowalla'
+    end
   end
 
   protected
