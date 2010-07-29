@@ -26,7 +26,7 @@ class App < Sinatra::Base
 
   get '/auth/gowalla' do
     redirect(client.web_server.
-             authorize_url(:redirect_uri => redirect_uri, :state => 1g))
+             authorize_url(:redirect_uri => redirect_uri, :state => 1))
   end
 
   get '/auth/gowalla/callback' do
