@@ -26,13 +26,15 @@ class App < Sinatra::Base
 
   get '/auth/gowalla' do
     redirect(client.web_server.
-             authorize_url(:redirect_uri => redirect_uri, :state => 1))
+             authorize_url(:redirect_uri => redirect_uri, :state => 1g))
   end
 
   get '/auth/gowalla/callback' do
-    session[:access_token] = client.
+    response = client.
       web_server.
-      get_access_token(params[:code], :redirect_uri => redirect_uri).token
+      get_access_token(params[:code], :redirect_uri => redirect_uri)
+    session[:access_token] = response.token
+    session[:refresh_token] = response.refresh_token
 
     if session[:access_token]
       redirect '/auth/gowalla/test'
@@ -45,7 +47,22 @@ class App < Sinatra::Base
     if session[:access_token]
       connection = OAuth2::AccessToken.new(client, session[:access_token])
       headers = {'Accept' => 'application/json'}
-      connection.get('/users/jw', {}, headers).inspect
+      me = connection.get('/users/me', {}, headers)
+      "<pre>#{JSON.pretty_generate(JSON.parse(me))}</pre>"
+    else
+      redirect '/auth/gowalla'
+    end
+  end
+
+  get '/auth/gowalla/refresh' do
+    if session[:refresh_token]
+      # This doesn't work. Patch oauth2?
+      response = client.
+        web_server.
+        get_access_token(nil, :refresh_token => session[:refresh_token], :type => 'refresh_token')
+      session[:access_token] = response.token
+      session[:refresh_token] = response.refresh_token
+      puts response.refresh_token
     else
       redirect '/auth/gowalla'
     end
