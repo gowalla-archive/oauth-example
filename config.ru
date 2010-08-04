@@ -17,8 +17,6 @@ require 'open-uri'
 
 require 'lib/helpers'
 
-use Rack::Static, :urls => ["/css", "/images", "/js", "favicon.ico"], :root => "public"
-
 class App < Sinatra::Base
 
   set :sessions, true
@@ -60,20 +58,24 @@ class App < Sinatra::Base
 
   get '/auth/gowalla' do
     redirect(client.web_server.
-             authorize_url(:redirect_uri => redirect_uri, :state => 1))
+             authorize_url(:redirect_uri => redirect_uri, :scope => 'read-write'))
   end
 
   get '/auth/gowalla/callback' do
-    response = client.
-      web_server.
-      get_access_token(params[:code], :redirect_uri => redirect_uri)
-    session[:access_token] = response.token
-    session[:refresh_token] = response.refresh_token
+    begin
+      response = client.
+        web_server.
+        get_access_token(params[:code], :redirect_uri => redirect_uri)
+      session[:access_token] = response.token
+      session[:refresh_token] = response.refresh_token
 
-    if session[:access_token]
-      redirect '/'
-    else
-      "Error retrieving access token."
+      if session[:access_token]
+        redirect '/'
+      else
+        "Error retrieving access token."
+      end
+    rescue OAuth2::HTTPError => e
+      e.response.body
     end
   end
 
@@ -98,8 +100,8 @@ protected
     api_secret = ENV['API_SECRET'] || 'cb74c1e2f66c4c289fde2939bf6a6433'
     options = {
       :site => ENV['SITE'] || 'https://api.gowalla.com',
-      :authorize_url => ENV['AUTHORIZE_URL'] || 'http://api.gowalla.com/api/oauth/new',
-      :access_token_url => ENV['TOKEN_URL'] || 'http://api.gowalla.com/api/oauth/token'
+      :authorize_url => ENV['SITE'].dup << '/api/oauth/new',
+      :access_token_url => ENV['SITE'].dup << '/api/oauth/token'
     }
     OAuth2::Client.new(api_key, api_secret, options)
   end
@@ -121,4 +123,5 @@ protected
 
 end
 
+use Rack::Static, :urls => ["/css", "/images", "/js", "favicon.ico"], :root => "public"
 run App

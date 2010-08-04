@@ -1,5 +1,4 @@
 $(document).ready(function() {
-  console.log("onready");
         
   $("a.check-in.enabled").live('click', function(e) {
     e.preventDefault();
@@ -21,13 +20,15 @@ $(document).ready(function() {
   }
 
   function errorCallback(error) {
-    console.log(error);
+    if (console.log) {
+      console.log(error);
+    }
   }
   
   if(navigator.geolocation){
-    console.log("Yes, Geolocation is Supported");
+    errorCallback("Yes, Geolocation is Supported");
     navigator.geolocation.getCurrentPosition(successCallback, errorCallback);
   } else {
-    console.log("No, Geolocation is not Supported");
+    errorCallback("No, Geolocation is not Supported");
   }
 });
