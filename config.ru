@@ -11,18 +11,52 @@ end
 require 'sinatra/base'
 require 'oauth2'
 require 'json'
+require 'haml'
+
+require 'open-uri'
+
+require 'lib/helpers'
+
+use Rack::Static, :urls => ["/css", "/images", "/js", "favicon.ico"], :root => "public"
 
 class App < Sinatra::Base
 
   set :sessions, true
 
-  get '/' do
-    if session[:access_token]
-      redirect '/auth/gowalla/test'
-    else
-      "Why not authenticate with <a href=\'/auth/gowalla\'>Gowalla</a>?"
-    end
+  helpers do
+    include Helpers
   end
+
+  get '/' do
+    redirect '/auth/gowalla' unless session[:access_token]
+    
+    @user = JSON.parse(connection.get('/users/me', {}, headers))  
+    
+    haml :index
+  end
+
+  get '/spots' do
+    @lat = params[:lat].to_f
+    @lng = params[:lng].to_f
+
+    @spots = JSON.parse(open("http://api.gowalla.com/spots.json?lat=#{@lat}&lng=#{@lng}&limit=10").read)["spots"]
+
+    haml :spots
+  end
+  
+  post '/spots/:id/check-in' do
+    content_type :json
+    
+    @checkin = JSON.parse(connection.post('/checkins', {
+      :spot_id => params[:id],
+      :lat => params[:lat],
+      :lng => params[:lng]
+    }, headers))
+    
+    @checkin.to_json
+  end
+  
+# Authentication
 
   get '/auth/gowalla' do
     redirect(client.web_server.
@@ -37,20 +71,9 @@ class App < Sinatra::Base
     session[:refresh_token] = response.refresh_token
 
     if session[:access_token]
-      redirect '/auth/gowalla/test'
+      redirect '/'
     else
       "Error retrieving access token."
-    end
-  end
-
-  get '/auth/gowalla/test' do
-    if session[:access_token]
-      connection = OAuth2::AccessToken.new(client, session[:access_token])
-      headers = {'Accept' => 'application/json'}
-      me = connection.get('/users/me', {}, headers)
-      "<pre>#{JSON.pretty_generate(JSON.parse(me))}</pre>"
-    else
-      redirect '/auth/gowalla'
     end
   end
 
@@ -68,17 +91,25 @@ class App < Sinatra::Base
     end
   end
 
-  protected
+protected
 
-  def client
-    api_key = ENV['API_KEY'] || '2669aacbe4a44db7a0d0c8444eb2782f'
-    api_secret = ENV['API_SECRET'] || 'a0fbd20e3a4e4b078f2ee159d4b3e29e'
+  def client    
+    api_key = ENV['API_KEY'] || '63914094b32346229c81694bec3ffc22'
+    api_secret = ENV['API_SECRET'] || 'cb74c1e2f66c4c289fde2939bf6a6433'
     options = {
-      :site => ENV['SITE'] || 'http://localhost:3000',
-      :authorize_url => ENV['AUTHORIZE_URL'] || 'http://localhost:3000/api/oauth/new',
-      :access_token_url => ENV['TOKEN_URL'] || 'http://localhost:3000/api/oauth/token'
+      :site => ENV['SITE'] || 'https://api.gowalla.com',
+      :authorize_url => ENV['AUTHORIZE_URL'] || 'http://api.gowalla.com/api/oauth/new',
+      :access_token_url => ENV['TOKEN_URL'] || 'http://api.gowalla.com/api/oauth/token'
     }
     OAuth2::Client.new(api_key, api_secret, options)
+  end
+  
+  def connection
+    OAuth2::AccessToken.new(client, session[:access_token], session[:refresh_token])
+  end
+
+  def headers
+    {'Accept' => 'application/json'}
   end
 
   def redirect_uri

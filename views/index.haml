@@ -1,0 +1,32 @@
+!!!
+%html{:lang => "en"}
+  %head
+    %meta{:charset => "utf-8"}
+    %title OAuth Example
+    %link{:rel => "stylesheet", :href => "/css/screen.css", :type => 'text/css', :media => "screen", :charset => "utf-8"}
+  %body
+    .container
+      %header
+        %img#avatar{:src => @user["image_url"], :width => 100, :height => 100}
+        %hgroup
+          %h1#name= "#{@user["first_name"]} #{@user["last_name"]}"
+          %h2#hometown= @user["hometown"]
+      #content
+        - if last_checkin = @user["last_checkins"].first
+          %section#last-check-in
+            %img.stamp{:src => last_checkin["spot"]["image_url"], :alt => last_checkin["spot"]["name"]}
+            %hgroup
+              %h1 
+                Last Checked-In at 
+                %span.spot-name= last_checkin["spot"]["name"]
+              %h2.timestamp
+                %time{:datetime => last_checkin["created_at"]}= relative_time_ago(DateTime.parse(last_checkin["created_at"]))
+            %blockquote.message= last_checkin["message"]
+        
+        %section#nearby-spots
+      %footer
+        %span#current-location
+    %iframe#check-in-success-screen
+    
+  %script{:type => "text/javascript", :src => "/js/jQuery.js"}
+  %script{:type => "text/javascript", :src => "/js/application.js"}

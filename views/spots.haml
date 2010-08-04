@@ -1,0 +1,12 @@
+%h1 Nearby Spots
+.coordinate{"data-latitude" => @lat, "data-longitude" => @lng}
+%ol
+  - for spot in @spots
+    %li
+      %img.stamp{:src => spot["image_url"]}
+      %span.name= spot["name"]
+      %span.relative-location= distance_and_bearing_from_between_coordinates(@lat, @lng, spot["lat"].to_f, spot["lng"].to_f)
+      - if can_check_in_from_coordinate?(@lat, @lng, spot["lat"].to_f, spot["lng"].to_f)
+        %a.button.check-in.enabled{:href => "#{spot["url"]}/check-in"} Check-In
+      - else
+        %a.button.check-in.disabled{} I'm Not There
