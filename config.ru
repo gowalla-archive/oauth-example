@@ -66,6 +66,7 @@ class App < Sinatra::Base
       response = client.
         web_server.
         get_access_token(params[:code], :redirect_uri => redirect_uri)
+      session[:fresh_token] = true
       session[:access_token] = response.token
       session[:refresh_token] = response.refresh_token
 
@@ -91,6 +92,14 @@ class App < Sinatra::Base
     else
       redirect '/auth/gowalla'
     end
+  end
+
+  # An error from Gowalla most likely means our token is bad. Delete it
+  # and re-authorize.
+  error OAuth2::HTTPError do
+    session.delete(:access_token)
+    session.delete(:refresh_token)
+    redirect('/auth/gowalla')
   end
 
 protected
@@ -121,7 +130,6 @@ protected
     uri.query = nil
     uri.to_s
   end
-
 end
 
 use Rack::Static, :urls => ["/css", "/images", "/js", "favicon.ico"], :root => "public"
