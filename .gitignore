@@ -1,4 +1,1 @@
-.bundle
-.sass-cache
-*.sqlite3
-/cache
+go
