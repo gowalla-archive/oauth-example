@@ -66,7 +66,6 @@ class App < Sinatra::Base
       response = client.
         web_server.
         get_access_token(params[:code], :redirect_uri => redirect_uri)
-      session[:fresh_token] = true
       session[:access_token] = response.token
       session[:refresh_token] = response.refresh_token
 
@@ -94,12 +93,12 @@ class App < Sinatra::Base
     end
   end
 
-  # An error from Gowalla most likely means our token is bad. Delete it
-  # and re-authorize.
   error OAuth2::HTTPError do
-    session.delete(:access_token)
-    session.delete(:refresh_token)
-    redirect('/auth/gowalla')
+    reset
+  end
+  
+  error OAuth2::AccessDenied do
+    reset
   end
 
 protected
@@ -129,6 +128,14 @@ protected
     uri.path = '/auth/gowalla/callback'
     uri.query = nil
     uri.to_s
+  end
+
+  # An error from Gowalla most likely means our token is bad. Delete it
+  # and re-authorize.
+  def reset
+    session.delete(:access_token)
+    session.delete(:refresh_token)
+    redirect('/auth/gowalla')
   end
 end
 
