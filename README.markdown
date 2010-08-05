@@ -6,9 +6,8 @@ This little app demonstrates how to use Gowalla's OAuth API to authorize an appl
 
 - `gem install bundler`
 - `bundle install`
-- `sass --watch public/css/elite.scss`
 
-Open up another terminal tab. If you are touching anything other than the view or CSS, do:
+Open up another terminal tab and do:
 
     API_KEY='your_key' API_SECRET='your_secret' bundle exec shotgun -p 3001
 
