@@ -96,12 +96,13 @@ class App < Sinatra::Base
 protected
 
   def client
-    api_key = ENV['API_KEY']
+    api_key    = ENV['API_KEY']
     api_secret = ENV['API_SECRET']
+    site       = ENV['SITE'] || 'https://api.gowalla.com'
     options = {
-      :site => ENV['SITE'] || 'https://api.gowalla.com',
-      :authorize_url => ENV['SITE'].dup << '/api/oauth/new',
-      :access_token_url => ENV['SITE'].dup << '/api/oauth/token'
+      :site => site,
+      :authorize_url => site.dup << '/api/oauth/new',
+      :access_token_url => site.dup << '/api/oauth/token'
     }
     OAuth2::Client.new(api_key, api_secret, options)
   end
