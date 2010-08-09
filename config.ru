@@ -106,11 +106,11 @@ protected
   def client
     api_key    = ENV['API_KEY']
     api_secret = ENV['API_SECRET']
-    site       = ENV['SITE'] || 'https://api.gowalla.com'
+    oauth_site = ENV['OAUTH_SITE'] || 'https://gowalla.com'
     options = {
-      :site => site,
-      :authorize_url => site.dup << '/api/oauth/new',
-      :access_token_url => site.dup << '/api/oauth/token'
+      :site => ENV['SITE'] || 'https://api.gowalla.com',
+      :authorize_url => oauth_site.dup << '/api/oauth/new',
+      :access_token_url => oauth_site.dup << '/api/oauth/token'
     }
     OAuth2::Client.new(api_key, api_secret, options)
   end
